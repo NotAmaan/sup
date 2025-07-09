@@ -1,6 +1,6 @@
 # Use a base image with PyTorch and CUDA pre-installed.
 # The version is chosen to be compatible with the requirements.txt
-FROM runpod/pytorch:2.1.0-py3.10-cuda12.1.1-devel-ubuntu22.04
+FROM runpod/pytorch:2.0.1-py3.10-cuda11.8.0-devel-ubuntu22.04
 
 # Set the working directory inside the container
 WORKDIR /workspace
