@@ -1,5 +1,21 @@
-# Use a base image with PyTorch and CUDA pre-installed.
-# Using a verified available RunPod PyTorch image
+# Multi-stage build to download models in a separate stage
+# This helps manage disk space during build
+
+# Stage 1: Download models
+FROM python:3.10-slim as model-downloader
+
+# Install required packages for downloading
+RUN pip install --no-cache-dir huggingface_hub[cli,hf_transfer]
+
+# Copy download script
+COPY download_models_docker.sh /download_models_docker.sh
+RUN chmod +x /download_models_docker.sh
+
+# Download models
+WORKDIR /workspace
+RUN /download_models_docker.sh
+
+# Stage 2: Final image
 FROM runpod/pytorch:2.1.1-py3.10-cuda12.1.1-devel-ubuntu22.04
 
 # Set the working directory inside the container
@@ -23,16 +39,11 @@ RUN pip install --upgrade pip && \
 # Copy the rest of the application code
 COPY . .
 
-# Copy the non-interactive download script for Docker builds
-COPY download_models_docker.sh .
+# Copy pre-downloaded models from the first stage
+COPY --from=model-downloader /workspace/models /workspace/models
 
-# The project requires models to be downloaded.
-# Using non-interactive script for Docker build to pre-download models
-# Note: This will increase the image size significantly (several GB)
-RUN chmod +x download_models_docker.sh && ./download_models_docker.sh
-
-# Also make the interactive script executable for runtime use if needed
-RUN chmod +x download_models.sh
+# Make scripts executable
+RUN chmod +x download_models.sh start.sh
 
 # Expose the port Gradio runs on (default is 7860)
 EXPOSE 7860
