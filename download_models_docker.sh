@@ -15,9 +15,9 @@ BASE_DIR="models"
 DOWNLOADS_DIR="downloads"
 mkdir -p "$BASE_DIR" "$DOWNLOADS_DIR"
 
-# Enable high-speed transfers for Docker build
-echo "Enabling high-speed transfers for faster downloads..."
-export HF_HUB_ENABLE_HF_TRANSFER=1
+# Disable HF_TRANSFER to avoid disk space issues in Docker build
+echo "Using standard transfer mode for Docker build..."
+export HF_HUB_ENABLE_HF_TRANSFER=0
 
 # download if needed
 download_model() {
@@ -35,10 +35,11 @@ download_model() {
         echo "File already exists: $target_file"
     else
         echo "Downloading: $file_path to $target_dir"
-        huggingface-cli download "$repo" "$file_path" --local-dir "$DOWNLOADS_DIR"
-        # Move from temp download location to final location
-        mkdir -p "$(dirname "$target_dir/$filename")"
-        mv "$DOWNLOADS_DIR/$file_path" "$target_dir/$filename"
+        # Download directly to target location to save space
+        huggingface-cli download "$repo" "$file_path" --local-dir "$target_dir" --local-dir-use-symlinks False
+        
+        # Clean up any cache files
+        rm -rf "$HOME/.cache/huggingface/hub/models--${repo//\//_}"
     fi
 }
 
@@ -77,7 +78,9 @@ if [ "$all_files_exist" = true ]; then
 else
     echo "↓ Downloading complete SmolVLM-500M-Instruct repository..."
     mkdir -p "$TARGET_DIR"
-    huggingface-cli download $REPO_NAME --local-dir "$TARGET_DIR"
+    huggingface-cli download $REPO_NAME --local-dir "$TARGET_DIR" --local-dir-use-symlinks False
+    # Clean up cache
+    rm -rf "$HOME/.cache/huggingface/hub/models--${REPO_NAME//\//_}"
 fi
 
 # SUPIR models - individual files
