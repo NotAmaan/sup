@@ -31,9 +31,9 @@ COPY requirements.txt .
 
 # Install Python dependencies
 # Using --no-cache-dir to reduce image size
-# First install specific PyTorch version to match install_linux_local.sh
+# Note: The base image already includes PyTorch 2.1.1, we'll use that to save space
+# If you need PyTorch 2.7.0 specifically, consider building locally or using a larger build environment
 RUN pip install --upgrade pip && \
-    pip install torch==2.7.0+cu126 torchvision==0.22.0+cu126 torchaudio==2.7.0+cu126 --extra-index-url https://download.pytorch.org/whl/cu126 && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application code
@@ -41,6 +41,10 @@ COPY . .
 
 # Copy pre-downloaded models from the first stage
 COPY --from=model-downloader /workspace/models /workspace/models
+
+# Check PyTorch compatibility
+COPY check_pytorch_compatibility.py .
+RUN python check_pytorch_compatibility.py
 
 # Make scripts executable
 RUN chmod +x download_models.sh start.sh
