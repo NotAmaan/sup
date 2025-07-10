@@ -23,12 +23,16 @@ RUN pip install --upgrade pip && \
 # Copy the rest of the application code
 COPY . .
 
+# Copy the non-interactive download script for Docker builds
+COPY download_models_docker.sh .
+
 # The project requires models to be downloaded.
-# The download_models.sh script is provided for this purpose.
-# You can uncomment the following line to download the models during the build process.
-# Note: This will increase the image size significantly.
-# An alternative is to mount the models directory as a volume during runtime.
-RUN chmod +x download_models.sh && ./download_models.sh
+# Using non-interactive script for Docker build to pre-download models
+# Note: This will increase the image size significantly (several GB)
+RUN chmod +x download_models_docker.sh && ./download_models_docker.sh
+
+# Also make the interactive script executable for runtime use if needed
+RUN chmod +x download_models.sh
 
 # Expose the port Gradio runs on (default is 7860)
 EXPOSE 7860
