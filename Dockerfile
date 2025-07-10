@@ -21,11 +21,8 @@ RUN pip install --upgrade pip && \
 # Copy the rest of the application code
 COPY . .
 
-# The project requires models to be downloaded.
-# The download_models.sh script is provided for this purpose.
-# You can uncomment the following line to download the models during the build process.
-# Note: This will increase the image size significantly.
-# An alternative is to mount the models directory as a volume during runtime.
+# Create a script to download models
+ENV HF_HUB_ENABLE_HF_TRANSFER=1
 RUN chmod +x download_models.sh && ./download_models.sh
 
 # Expose the port Gradio runs on (default is 7860)
